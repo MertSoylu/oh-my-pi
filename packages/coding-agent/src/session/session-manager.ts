@@ -132,6 +132,22 @@ export async function copySessionArtifacts(sourceSessionFile: string, destinatio
 }
 
 /**
+ * Extract the visible text of a user message. Mirrors the text extraction used
+ * for session listings; string content passes through, structured content keeps
+ * only `text` blocks (images/tool payloads are not draft text).
+ */
+function extractUserMessageText(message: Message): string | undefined {
+	const content = message.content;
+	if (typeof content === "string") return content;
+	if (!Array.isArray(content)) return undefined;
+	let text = "";
+	for (const block of content) {
+		if (block.type === "text") text += text ? ` ${block.text}` : block.text;
+	}
+	return text || undefined;
+}
+
+/**
  * Resolve a breadcrumb's recorded session file to its interactive root. Subagent
  * (and other artifact) sessions live inside a parent session's artifacts dir —
  * `<parent>.jsonl` strips its suffix to `<parent>/`, and a child writes
@@ -2030,6 +2046,47 @@ export class SessionManager {
 			this.#draftOnlySessionCleanupArmed = true;
 
 		return draft;
+	}
+
+	/**
+	 * Whether `draft` collides with content already submitted as a user message in
+	 * this session. A persisted draft whose text (or every line of it) matches
+	 * submitted user messages is a leaked editor buffer — text that was already
+	 * sent and then restored into the composer by a failed/queued submit path —
+	 * rather than a genuinely unsent draft, and must not be restored on resume
+	 * (issue #5741).
+	 *
+	 * Matching is deliberately narrow so real unsent drafts are never dropped:
+	 * - a single-line draft only matches when it equals a submitted message
+	 *   verbatim (a new short prompt that merely repeats a fragment of an old
+	 *   message is kept);
+	 * - a multi-line draft matches when every non-empty line appears verbatim
+	 *   inside some submitted message (covers concatenations of several pasted
+	 *   fragments from different messages).
+	 */
+	isDraftSubmittedContent(draft: string): boolean {
+		const submitted = this.#recentSubmittedUserTexts();
+		if (submitted.length === 0) return false;
+		const normalized = draft.replace(/\r\n/g, "\n").trim();
+		if (!normalized) return false;
+		if (!normalized.includes("\n")) {
+			return submitted.includes(normalized);
+		}
+		const lines = normalized.split("\n").filter(line => line.trim().length > 0);
+		if (lines.length === 0) return false;
+		return lines.every(line => submitted.some(text => text.includes(line.trim())));
+	}
+
+	/** Text of the most recent user messages, newest first, for {@link isDraftSubmittedContent}. */
+	#recentSubmittedUserTexts(limit = 10): string[] {
+		const texts: string[] = [];
+		for (let i = this.#entries.length - 1; i >= 0 && texts.length < limit; i--) {
+			const entry = this.#entries[i];
+			if (entry?.type !== "message" || entry.message.role !== "user") continue;
+			const text = extractUserMessageText(entry.message);
+			if (text) texts.push(text.replace(/\r\n/g, "\n").trim());
+		}
+		return texts;
 	}
 
 	/** The source that set the session name: "user" (manual/RPC) or "auto" (generated title). */

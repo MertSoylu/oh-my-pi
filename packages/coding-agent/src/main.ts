@@ -461,6 +461,8 @@ async function runInteractiveMode(
 	lspServers: LspStartupServerInfo[] | undefined,
 	mcpManager: MCPManager | undefined,
 	resuming: boolean,
+	/** Whether an unsent editor draft should be restored: only explicit resumes (not forks/fresh launches). */
+	restoreEditorDraft: boolean,
 	forceSetupWizard: boolean,
 	showStartupSplash: boolean,
 	eventBus?: EventBus,
@@ -501,6 +503,7 @@ async function runInteractiveMode(
 	await mode.init({
 		suppressWelcomeIntro: resuming || setupScenes.length > 0 || playStartupSplash,
 		clearInitialTerminalHistory: true,
+		restoreEditorDraft,
 	});
 
 	if (setupWizard && playStartupSplash) {
@@ -1386,6 +1389,10 @@ export async function runRootCommand(
 	// fresh persisted OMP session before constructing the AgentSession.
 	let sessionManager: SessionManager | undefined;
 	let foreignSource: ForeignSessionSource | undefined;
+	// Set when the startup session picker selected an existing session to resume.
+	// The picker path opens the session directly without setting parsed.resume, so
+	// the editor-draft restore (resume-only, issue #5741) needs its own marker.
+	let resumedViaPicker = false;
 	try {
 		foreignSource = resolveForeignSessionSource(parsedArgs);
 		if (foreignSource) {
@@ -1528,6 +1535,7 @@ export async function runRootCommand(
 			scopedModels = await resolveScopedModels(parsedArgs, modelRegistry, settingsInstance);
 		}
 		sessionManager = await SessionManager.open(selected.path);
+		resumedViaPicker = true;
 	}
 
 	if (sessionManager && (parsedArgs.continue || parsedArgs.resume || parsedArgs.fork || foreignSource)) {
@@ -1798,6 +1806,7 @@ export async function runRootCommand(
 				lspServers,
 				mcpManager,
 				Boolean(parsedArgs.continue || parsedArgs.resume || parsedArgs.fork || foreignSource),
+				Boolean(parsedArgs.continue || parsedArgs.resume || foreignSource || resumedViaPicker),
 				deps.forceSetupWizard === true,
 				showStartupSplash,
 				eventBus,

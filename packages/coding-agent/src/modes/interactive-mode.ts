@@ -1174,10 +1174,20 @@ export class InteractiveMode implements InteractiveModeContext {
 
 		// Restore unsent editor draft from previous session shutdown (Ctrl+D).
 		// One-shot: consumeDraft removes the sidecar after read so the next
-		// resume does not re-restore the same text.
+		// resume does not re-restore the same text. Restores only when this
+		// launch is an explicit resume of an existing session (issue #5741), and
+		// never when the draft collides with content already submitted as a user
+		// message — a failed/queued submit can leave submitted text in the
+		// composer, and persisting that buffer would surface it as a "leak" on
+		// the next resume.
 		try {
 			const draft = await this.sessionManager.consumeDraft();
-			if (draft && !this.editor.getText()) {
+			if (
+				draft &&
+				options.restoreEditorDraft !== false &&
+				!this.editor.getText() &&
+				!this.sessionManager.isDraftSubmittedContent(draft)
+			) {
 				this.editor.setText(draft);
 				this.updateEditorBorderColor();
 				this.ui.requestRender();

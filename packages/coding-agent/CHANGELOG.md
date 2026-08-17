@@ -5,6 +5,7 @@
 ### Fixed
 
 - Fixed `omp stats` and `/stats` dashboards being unreachable from container hosts by accepting an explicit `--host` bind address while preserving the `127.0.0.1` default.
+- Fixed editor drafts from a prior session reappearing in the composer on launch: the unsent-draft restore now runs only for explicit session resumes (not fresh launches or forks) and drops drafts whose content was already submitted as a user message, so leaked composer buffers left by failed/queued submits no longer surface as stale text ([#5741](https://github.com/can1357/oh-my-pi/issues/5741)).
 
 ## [17.3.5] - 2026-08-16
 

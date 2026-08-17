@@ -90,6 +90,15 @@ export type TodoPhase = {
 export interface InteractiveModeInitOptions {
 	suppressWelcomeIntro?: boolean;
 	clearInitialTerminalHistory?: boolean;
+	/**
+	 * Whether an unsent editor draft persisted at the previous shutdown should be
+	 * restored into the composer. Only explicit resumes of an existing session
+	 * (--resume/--continue/auto-resume/foreign import/in-app resume picker) restore
+	 * the draft; fresh launches and forks start with an empty editor so text from a
+	 * prior session can never surface uninvited (issue #5741). Defaults to true for
+	 * callers that do not opt in.
+	 */
+	restoreEditorDraft?: boolean;
 }
 
 export type InteractiveSelectorDialogOptions = ExtensionUIDialogOptions & Pick<HookSelectorOptions, "disabledIndices">;
