@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- Fixed configured `extraBody` being dropped from OpenAI Responses, Azure Responses, and Anthropic Messages requests ([#12087](https://github.com/can1357/oh-my-pi/issues/12087)).
+
 ## [18.2.6] - 2026-09-18
 
 ### Fixed
