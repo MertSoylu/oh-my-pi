@@ -6,6 +6,15 @@
 
 - Fixed `compat.extraBody` being silently dropped for `openai-responses` and `anthropic-messages` models, so configured extra request-body fields now reach those APIs ([#12087](https://github.com/can1357/oh-my-pi/issues/12087)).
 
+### Added
+
+- Added `buildDiscoveredModel` helper for custom providers
+- Added support for glob-based patterns in identity overrides
+
+### Changed
+
+- Centralized llama.cpp Qwen routing and thinking policy in KDL, with reviewed Bonsai lineage aliases and shared backend policy for custom provider names.
+
 ## [18.2.5] - 2026-09-17
 
 ### Added
