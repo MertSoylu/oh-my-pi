@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- Added `TypeSafeJudgeOptions.headers`, sent on every System One judgment request so proxy gateways can require routing or custom authentication headers.
+
 ### Fixed
 
 - Fixed configured `extraBody` being dropped from OpenAI Responses, Azure Responses, and Anthropic Messages requests ([#12425](https://github.com/can1357/oh-my-pi/pull/12425) by [@MertSoylu](https://github.com/MertSoylu)).

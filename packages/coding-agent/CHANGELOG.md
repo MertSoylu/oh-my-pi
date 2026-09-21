@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+### Added
+
+- Added `typesafe` and `openrouter-decisions` to the `models.yml` provider/model `api` values, so a native judge can be declared as a custom provider with `baseUrl`, `apiKey`, and `headers`.
+
+### Fixed
+
+- Fixed native judges ignoring configured `headers`: the judge chain now resolves model headers and passes them to the System One transport, so gateway-authenticated and header-routed judge providers work without extra configuration.
+
 ## [18.2.7] - 2026-09-21
 
 ### Breaking Changes
