@@ -2,6 +2,69 @@
 
 ## [Unreleased]
 
+### Changed
+
+- Updated model hub and oauth selector components to use namespaced `authStorage` API
+
+## [18.2.11] - 2026-09-23
+
+### Added
+
+- Added a Skills section to the settings.
+- Enabled OSC 8 hyperlinks in rio.
+
+### Fixed
+
+- Fixed scrolling startup release notes without requiring an initial Escape keypress.
+- Improved usage quota display so names remain distinguishable and readable in narrow and multi-column dashboards.
+
+## [18.2.10] - 2026-09-22
+
+### Changed
+
+- Added support for multiple concurrent TUI paint listeners to enable simultaneous session recording and streaming
+- Coalesced status event updates for progress-based operations to reduce TUI render overhead
+
+## [18.2.9] - 2026-09-22
+
+### Added
+
+- Added Claude and Codex saved-reset counts, availability, and expiry to usage views, with provider-specific confirmation and uniquely identified account options.
+- Added terminal detection and capability support for otty and rio, including Kitty graphics and true-color support where available, plus otty hyperlinks and notifications.
+- Added the public `stripTerminalSequences` export for extensions that need to remove terminal control sequences.
+
+### Fixed
+
+- Composer shape previews now use the full available overlay width instead of being clipped at 96 columns.
+- Fixed cursor placement when recalling prompts from history, keeping single-line entries at the end and preserving the appropriate position for multi-line entries.
+- Restored modified-key handling and terminal notifications over SSH sessions running inside tmux.
+- Fixed typed Enter occasionally being interpreted as a literal newline when terminal input events are batched.
+
+## [18.2.8] - 2026-09-21
+
+### Changed
+
+- Improved Bash tool background-task notices by providing completed output as a follow-up and discouraging unnecessary polling.
+
+## [18.2.7] - 2026-09-21
+
+### Breaking Changes
+
+- Removed specialized keyword modules in favor of a centralized registration system
+
+### Added
+
+- Added `find` tool renderer to display search results with hit ranking and score visualization
+- Supported collapsing/expanding search hit details and range snippets
+- Enabled file hyperlinking for navigation to absolute paths in search results
+- Added streaming progress display for incomplete find tool operations
+- Added Glyph Protocol support for rendering icons without requiring patched fonts
+- Added `setMagicKeywords` for dynamic configuration of highlightable magic keywords
+
+### Fixed
+
+- Prevented magic keywords from triggering spelling autocorrect and underlining
+
 ## [18.2.5] - 2026-09-17
 
 ### Added
