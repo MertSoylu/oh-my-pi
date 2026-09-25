@@ -277,11 +277,6 @@
 ### Fixed
 
 - Fixed stdio MCP servers that die before completing the handshake reporting an opaque connection error; the failure now quotes the server's own stderr tail ([#11923](https://github.com/can1357/oh-my-pi/issues/11923); [#12476](https://github.com/can1357/oh-my-pi/pull/12476) by [@MertSoylu](https://github.com/MertSoylu)).
-- Fixed resume clutter: elide 0-turn sessions from the /resume menu; -c similarly skips empty sessions.
-- Fixed Edit calls getting stuck generating repeated closing tags after an empty `SM:AFTER` insertion.
-- Fixed Edit previews and application panicking on Unicode no-op edits and overlapping duplicate matches.
-- Fixed live subagent messages getting stuck behind persisted-agent discovery, and roster discovery looping on dot-named transcripts.
-- Fixed llama.cpp discovery of PrismML Bonsai 2 27B GGUFs: built-in and custom-named providers now share catalog rules for chat-completions routing and the Qwen 3.8 thinking ladder (`low`/`medium`/`xhigh`), including cached models.
 - Fixed system prompt configuration validation so systemPromptTemplate and customSystemPrompt cannot conflict with a full systemPrompt replacement, including when values are empty.
 - Added browser-relay support for listing eligible pages without attaching to or claiming them.
 - Fixed Codex compatibility with the sloppy edit tool.

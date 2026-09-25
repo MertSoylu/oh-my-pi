@@ -40,28 +40,10 @@ async function runGit(repo: string, args: string[]): Promise<string> {
 	return stdout.trim();
 }
 
-// Turn off git's background maintenance for a throwaway fixture repo. Git forks a
-// detached `maintenance run --auto` after commit/merge, and that child briefly
-// creates and removes `.git/objects/maintenance.lock`. These fixtures are copied
-// with `fs.cp` and deleted with `removeWithRetries`, both of which walk
-// `.git/objects` recursively, so an entry that vanishes mid-walk fails the walk
-// with ENOENT (observed in CI as
-// `ENOENT: lstat '/tmp/omp-commit-fixture-*/.git/objects/maintenance.lock'`).
-// The settings land in `.git/config`, which the fixture copies inherit.
-async function disableBackgroundMaintenance(repo: string): Promise<void> {
-	await runGit(repo, ["config", "gc.auto", "0"]);
-	await runGit(repo, ["config", "maintenance.auto", "false"]);
-}
-
-async function initRepo(repo: string, branch = "main"): Promise<void> {
-	await runGit(repo, ["init", "-q", "-b", branch]);
-	await disableBackgroundMaintenance(repo);
-}
-
 async function createGitRepo(): Promise<string> {
 	const repo = await fs.mkdtemp(path.join(os.tmpdir(), "omp-worktree-"));
 	tempDirs.push(repo);
-	await initRepo(repo);
+	await runGit(repo, ["init", "-q", "-b", "main"]);
 	return repo;
 }
 
@@ -208,7 +190,7 @@ describe("worktree isolation helpers", () => {
 
 		beforeAll(async () => {
 			repo = await fs.mkdtemp(path.join(os.tmpdir(), "omp-worktree-"));
-			await initRepo(repo, BASE_BRANCH);
+			await runGit(repo, ["init", "-q", "-b", BASE_BRANCH]);
 			await runGit(repo, ["config", "user.email", "test@example.com"]);
 			await runGit(repo, ["config", "user.name", "Test User"]);
 			await Promise.all([
@@ -660,7 +642,7 @@ describe("getRepoRoot", () => {
 		await fs.mkdir(path.join(outer, ".jj", "repo", "store"), { recursive: true });
 		const inner = path.join(outer, "vendor");
 		await fs.mkdir(inner, { recursive: true });
-		await initRepo(inner);
+		await runGit(inner, ["init", "-q", "-b", "main"]);
 
 		expect(await getRepoRoot(inner)).toBe(inner);
 	});
@@ -674,7 +656,7 @@ describe("detachGitDir", () => {
 	async function makeLinkedWorktree(): Promise<{ main: string; wt: string; commonDir: string; baseSha: string }> {
 		const main = await fs.mkdtemp(path.join(os.tmpdir(), "omp-detach-main-"));
 		tempDirs.push(main);
-		await initRepo(main);
+		await runGit(main, ["init", "-q", "-b", "main"]);
 		await runGit(main, ["config", "user.email", "src@example.com"]);
 		await runGit(main, ["config", "user.name", "Source User"]);
 		await fs.writeFile(path.join(main, "file.txt"), "base\n");
@@ -762,7 +744,7 @@ describe("detachGitDir", () => {
 	it("leaves an already-independent full-copy checkout untouched", async () => {
 		const src = await fs.mkdtemp(path.join(os.tmpdir(), "omp-detach-src-"));
 		tempDirs.push(src);
-		await initRepo(src);
+		await runGit(src, ["init", "-q", "-b", "main"]);
 		await runGit(src, ["config", "user.email", "src@example.com"]);
 		await runGit(src, ["config", "user.name", "Source User"]);
 		await fs.writeFile(path.join(src, "file.txt"), "base\n");
@@ -844,7 +826,7 @@ describe("detachGitDir", () => {
 		// Origin with two commits so a depth-1 clone has a real shallow boundary.
 		const origin = await fs.mkdtemp(path.join(os.tmpdir(), "omp-detach-origin-"));
 		tempDirs.push(origin);
-		await initRepo(origin);
+		await runGit(origin, ["init", "-q", "-b", "main"]);
 		await runGit(origin, ["config", "core.fsmonitor", "false"]);
 		await runGit(origin, ["config", "user.email", "src@example.com"]);
 		await runGit(origin, ["config", "user.name", "Source User"]);
@@ -864,7 +846,6 @@ describe("detachGitDir", () => {
 		// Git's fsmonitor/split-index interaction can crash during fixture setup.
 		await runGit(clone, ["config", "core.fsmonitor", "false"]);
 		await runGit(clone, ["config", "core.splitIndex", "true"]);
-		await disableBackgroundMaintenance(clone);
 		const wt = path.join(origin, "..", `${path.basename(origin)}-shallow-wt`);
 		tempDirs.push(wt);
 		await runGit(clone, ["worktree", "add", "-q", wt, "-b", "feature/parent", "HEAD"]);
@@ -958,7 +939,7 @@ describe("applyNestedPatches", () => {
 
 	beforeAll(async () => {
 		fixtureParent = await fs.mkdtemp(path.join(os.tmpdir(), "omp-nested-fixture-"));
-		await initRepo(fixtureParent);
+		await runGit(fixtureParent, ["init", "-q", "-b", "main"]);
 		await runGit(fixtureParent, ["config", "user.email", "test@example.com"]);
 		await runGit(fixtureParent, ["config", "user.name", "Test User"]);
 		// beforeEach copies both repos with fs.cp; auto maintenance would race
@@ -971,7 +952,7 @@ describe("applyNestedPatches", () => {
 
 		const fixtureNested = path.join(fixtureParent, nestedRel);
 		await fs.mkdir(fixtureNested, { recursive: true });
-		await initRepo(fixtureNested);
+		await runGit(fixtureNested, ["init", "-q", "-b", "main"]);
 		await runGit(fixtureNested, ["config", "user.email", "test@example.com"]);
 		await runGit(fixtureNested, ["config", "user.name", "Test User"]);
 		await runGit(fixtureNested, ["config", "maintenance.auto", "false"]);
@@ -1087,7 +1068,7 @@ describe("commitToBranch preserves agent commits", () => {
 
 	beforeAll(async () => {
 		fixtureRepo = await fs.mkdtemp(path.join(os.tmpdir(), "omp-commit-fixture-"));
-		await initRepo(fixtureRepo);
+		await runGit(fixtureRepo, ["init", "-q", "-b", "main"]);
 		await runGit(fixtureRepo, ["config", "user.email", "test@example.com"]);
 		await runGit(fixtureRepo, ["config", "user.name", "Test User"]);
 		// `git commit` kicks off `git maintenance run --auto`, which writes
